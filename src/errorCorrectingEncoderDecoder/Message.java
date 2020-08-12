@@ -1,39 +1,78 @@
 package errorCorrectingEncoderDecoder;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Random;
-
 public class Message {
-	private String path;
 	private byte[] msg;
-	private String[] binary;
 	
-	Message (String path) {
-		this.path = path;
-		try {
-			msg = Files.readAllBytes(Paths.get(this.path));
-			binary = new String[msg.length];
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
+	private String[] hex;
+	private String[] bin;
+	
+ 	Message (byte[] msg) {
+		this.msg = msg;
+		this.hex = new String[msg.length];
+		this.bin = new String[msg.length];
+	}
+	Message (String[] bin) {
+		this.msg = null;
+		this.bin = bin;
+		this.hex = new String[bin.length];
+	}
+	Message (String[] hex, int base) {
+		this.msg = null;
+		this.hex = hex;
+		this.bin = new String[hex.length];
+	}
+	
+	
+	// methode
+	void convertDecToHex() {
+		for (int i = 0; i < msg.length; i++) {
+			String s = Integer.toHexString(msg[i]).toUpperCase();
+			if (msg[i] <= 15)
+				s = "0" + s;
+			hex[i] = s;
 		}
 	}
-	
-	void sendingMessage() {
-		convertDecToBin();
-		setError();
-		convertBinToDec();
-		loadMsgToFile();
-	}
-	
-	private void convertDecToBin() {
-		for (int i = 0; i < binary.length; i++) {
+	void convertDecToBin() {
+		for (int i = 0; i < msg.length; i++) {
 			String s = Integer.toBinaryString(msg[i]);
-			binary[i] = remplirZero(s); 
+			bin[i] = remplirZero(s); 
 		}
+	}
+	void convertBinToHex() {
+		for (int i = 0; i < bin.length; i++) {
+			String binary = bin[i];
+			String f = "";
+			int pow = 3, res = 0;
+			for (int j = 0; j < binary.length(); j++) {
+				res += Integer.parseInt(binary.substring(j, j + 1)) * Math.pow(2, pow);
+				pow--;
+				if (pow == -1) {
+					if (res == 0)
+						f = f + "0";
+					else
+						f = f + Integer.toHexString(res).toUpperCase(); 
+					pow = 3;
+					res = 0;
+				}
+			}
+			hex[i] = f;
+		}
+	}
+	void convertHexToBin() {
+		for (int i = 0; i < hex.length; i++) {
+			String binary = hex[i];
+			int res =  convertToNbr(binary.substring(0, 1)) * 16 + convertToNbr(binary.substring(1, 2)); 
+			bin[i] = remplirZero(Integer.toBinaryString(res));
+		}
+	}
+	int[] convertHexToDec() {
+		int[] arr = new int[hex.length];
+		for (int i = 0; i < hex.length; i++) {
+			String binary = hex[i];
+			int res =  convertToNbr(binary.substring(0, 1)) * 16 + convertToNbr(binary.substring(1, 2));
+			arr[i] = res;
+		}
+		return arr;
 	}
 	private String remplirZero(String s) {
 		int len = s.length();
@@ -44,34 +83,30 @@ public class Message {
 		}
 		return s;
 	}
-	private void setError() {
-		Random random = new Random();
-		for (int i = 0; i < binary.length; i++) {
-			int randPos = random.nextInt(8);
-			StringBuilder res = new StringBuilder(binary[i]);
-			char charPos = res.charAt(randPos) == '1' ? '0' : '1';
-			res.setCharAt(randPos, charPos);
-			binary[i] = res.toString();
+	private int convertToNbr(String val) {
+		switch (val) {
+		case "A": 
+			return 10;
+		case "B": 
+			return 11;
+		case "C": 
+			return 12;
+		case "D": 
+			return 13;
+		case "E": 
+			return 14;
+		case "F": 
+			return 15;
+		default:
+			return Integer.parseInt(val);
 		}
 	}
-	private void convertBinToDec() {
-		for (int i = 0; i < binary.length; i++) {
-			int nbr = 0;
-			for (int j = 0; j < 8; j++) {
-				if (binary[i].charAt(j) == '1')
-					nbr += Math.pow(2, 7 - j);
-			}
-			msg[i] = (byte)nbr;
-		}
+	
+	// setters & getters
+	public String[] getHex() {
+		return hex;
 	}
-	private void loadMsgToFile() {
-		try {
-			FileOutputStream fout = new FileOutputStream("C:\\Users\\HP\\eclipse-work\\site jet brains\\src\\errorCorrectingEncoderDecoder\\received.txt");
-			fout.write(msg);
-			fout.close();
-		} 
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+	public String[] getBin() {
+		return bin;
 	}
 }
