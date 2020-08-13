@@ -3,10 +3,7 @@ package errorCorrectingEncoderDecoder;
 public class Decode extends Mode{
 	private String[] correct;
 	private String[] decode;
-	private String[] remove;
 	private String[] hexCorr;
-	private String[] hexMsg;
-	private String[] binMsg;
 
 	Decode(String nameFileInput, String nameFileOutput) {
 		super(nameFileInput, nameFileOutput);
@@ -15,15 +12,13 @@ public class Decode extends Mode{
 	public void code() {
 		super.work();
 
+		//super.bin = new String[]{"01011010", "10001000", "10001100", "01001110", "00010110" ,"10100110", "00111110", "10010000"};
 		System.out.print("correct: ");
 		correctBin();
 		printArr(correct);
 		System.out.print("\ndecode: ");
 		decode();
 		printArr(decode);
-		System.out.print("\nremove: ");
-		remove();
-		printArr(remove);
 		System.out.print("\nhex view: ");
 		convert();
 		printArr(hexCorr);
@@ -33,84 +28,59 @@ public class Decode extends Mode{
 		super.saveDataToFile(dataByte());
 	}
 	
-	@Override
-	void work() {
-		printTitle();
-		hexMsg = super.msgInFile().trim().split(" ");
-		System.out.print("hex view: ");
-		printArr(hexMsg);
-		Message m = new Message(hexMsg, 16);
-		m.convertHexToBin();
-		binMsg = m.getBin();
-		System.out.print("\nbin view: ");
-		printArr(binMsg);
-	}
 	void correctBin() {
 		correct = new String[super.bin.length];
-		int pos = 0;
 		for (int i = 0; i < super.bin.length; i++) {
-			String s = super.bin[i];
-			int k =0;
-			int[] arr = new int[3];
-			int j =0;
-			while (j < s.length()) {
-				if (s.substring(j, j+1).equals(s.substring(j+1, j+2))) {
-					int a = Integer.parseInt(s.substring(j, j+2));
-					arr[k] = a;
-					k++;
-				}
-				else {
-					pos = j;
-				}
-				j+=2;
+			int p = 0, total = 0;
+			for (int j = 1; j <= 8; ) {
+				char res = findVal(super.bin[i], j);
+				if (res != super.bin[i].charAt(j - 1))
+					total += j;
+				j = (int)Math.pow(2, ++p);
 			}
-			int res = arr[0] ^ arr[1] ^ arr[2];
-			String resStr = "";
-			if (res == 0)
-				resStr = "00";
-			else if (res == 1)
-				resStr = "01";
-			else 
-				resStr = String.valueOf(res);
-			StringBuilder sb = new StringBuilder(s);
-			sb.replace(pos, pos + 2, resStr);
-			correct[i] = sb.toString();
+			StringBuilder reslt = new StringBuilder(super.bin[i]);
+			if(reslt.charAt(total - 1) == '1')
+				reslt.setCharAt(total - 1, '0');
+			else
+				reslt.setCharAt(total - 1, '1');
+			correct[i] = reslt.toString();
 		}
+	}
+	private char findVal(String s, int nextSeq) {
+		int nbr = 0, occ = nextSeq;
+		for (int i = nextSeq - 1; i < s.length();i++) {
+			if (i < s.length() && s.charAt(i) == '1') 
+				nbr++;
+			//System.out.print(s.charAt(i) + " ");
+			occ--;
+			if (occ == 0) {
+				i += nextSeq;
+				occ = nextSeq;
+			}
+		}
+		if (s.charAt(nextSeq - 1) == '1')
+			nbr--;
+		char res = nbr % 2 == 0 ? '0' : '1';
+		return res;
 	}
 	void decode() {
-		StringBuilder s = new StringBuilder("");
+		StringBuilder sb = new StringBuilder("");
+		decode = new String[correct.length / 2];
 		for (int i = 0; i < correct.length; i++) {
-			String b = correct[i];
-			for (int j = 0; j < b.length() - 3; j+=2) {
-				s.append(b.charAt(j));
+			String s = correct[i];
+			for (int j = 0; j < s.length(); j++) {
+				if (j != 0 && j != 1 && j != 3 && j != 7)
+					sb.append(s.charAt(j));
 			}
 		}
-		int size = (int)Math.ceil((correct.length * 3.0) / 8.0);
-		decode = new String[size];
-		int k = 0, i = 0;
-		while(i < s.length()) {
-			if (s.length() - i - 8 >= 0) {
-				decode[k] = s.substring(i, i+8);
-				i += 8;
-				k++;
-			}
-			else
-				break;
-		}
-		if (i < s.length())
-			decode[k] = s.substring(i);
-	}
-	void remove() {
-		int size = decode.length;
-		if (decode[decode.length - 1].length() < 8)
-			size--;
-		remove = new String[size];
-		for (int i = 0; i < remove.length; i++) {
-			remove[i] = decode[i];
+		int k = 0;
+		for (int i = 0; i < sb.length(); i+=8) {
+			decode[k] = sb.substring(i, i + 8);
+			k++;
 		}
 	}
 	void convert() {
-		Message msg = new Message(remove);
+		Message msg = new Message(decode);
 		msg.convertBinToHex();
 		hexCorr = msg.getHex();
 	}
@@ -133,5 +103,4 @@ public class Decode extends Mode{
 		int[] arr = m.convertHexToDec();
 		return arr;
 	}
-
 }

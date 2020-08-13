@@ -24,57 +24,48 @@ public class Encode extends Mode{
 	
 	void expand() {
 		System.out.print("expand: ");
+		expandBin = new String[super.bin.length * 2];
+		
 		// make all character in one String
-		String seqBin = "";
-		for (String s : super.bin) 
-			seqBin +=  s;
-		// count capacity the new expand arr
-		int maxSize = (int)Math.ceil(seqBin.length() / 3.0);
-		expandBin = new String[maxSize];
-		// traiter
-		int j = 0, nbr = 0;
-		expandBin[j] = "";
-		for (int i = 0; i < seqBin.length(); ) {
-			if (nbr == 3) {
-				expandBin[j] += "..";
-				j++;
-				if (j < expandBin.length)
-					expandBin[j] = "";
-				nbr = 0;
-			}
-			else if (j < expandBin.length){
-				expandBin[j] += String.valueOf(seqBin.charAt(i)) + String.valueOf(seqBin.charAt(i));
-				nbr++;
-				i++;
-			}
+				String seqBin = "";
+				for (String s : super.bin) 
+					seqBin +=  s;
+		int k = 0, i=0;
+		while (i < seqBin.length()) {
+			String s = ".." + seqBin.charAt(i) + "." +
+					seqBin.charAt(i+1) + seqBin.charAt(i+2) + seqBin.charAt(i+3) + ".";
+			expandBin[k] = s;
+			k++;
+			i +=4;
 		}
-		// traiter last case
-		String s = expandBin[expandBin.length - 1];
-		for (int i = s.length(); i < 8; i++)
-			expandBin[expandBin.length - 1] += ".";
 	}
 	void parity() {
 		System.out.print("\nparity: ");
 		parityBin = new String[expandBin.length];
-		int[] arr = new int[3];
 		for (int i = 0; i < expandBin.length; i++) {
-			arr[0] = Integer.parseInt(expandBin[i].substring(0, 1));
-			
-			if (expandBin[i].substring(2, 3).equals("."))
-				arr[1] = 0;
-			else
-				arr[1] = Integer.parseInt(expandBin[i].substring(2, 3));
-			if (expandBin[i].substring(4, 5).equals("."))
-				arr[2] = 0;
-			else
-			arr[2] = Integer.parseInt(expandBin[i].substring(4, 5));
-			
-			int res = arr[0] ^ arr[1] ^ arr[2];
-			String s = expandBin[i].substring(0,6) + String.valueOf(res) + String.valueOf(res);
-			parityBin[i] = s;
+			StringBuilder newStr = new StringBuilder(expandBin[i]);
+			int p = 0;
+			for (int j = 1; j <= 8; ) {
+				char res = findVal(expandBin[i], j);
+				newStr.setCharAt(j - 1, res);
+				j = (int)Math.pow(2, ++p);
+			}
+			parityBin[i] = newStr.toString();
 		}
-		String s = parityBin[parityBin.length - 1].replace('.', '0');
-		parityBin[parityBin.length - 1] = s;
+	}
+	private char findVal(String s, int nextSeq) {
+		int nbr = 0, occ = nextSeq;
+		for (int i = nextSeq - 1; i < s.length();i++) {
+			occ--;
+			if (s.charAt(i) == '1') 
+				nbr++;
+			if (occ == 0) {
+				i += nextSeq;
+				occ = nextSeq;
+			}
+		}
+		char res = nbr % 2 == 0 ? '0' : '1';
+		return res;
 	}
 	void resultat() {
 		System.out.print("\nhex view: ");

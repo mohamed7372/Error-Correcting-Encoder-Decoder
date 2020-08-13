@@ -5,8 +5,6 @@ import java.util.Random;
 public class Send extends Mode{
 	private String[] binRec;
 	private String[] hexRec;
-	private String[] hexMsg;
-	private String[] binMsg;
 	private Message msg;
 	
 	Send(String nameFileInput, String nameFileOutput) {
@@ -27,18 +25,6 @@ public class Send extends Mode{
 		super.saveDataToFile(dataByte());
 	}
 	
-	@Override
-	void work() {
-		printTitle();
-		hexMsg = super.msgInFile().trim().split(" ");
-		System.out.print("hex view: ");
-		printArr(hexMsg);
-		Message m = new Message(hexMsg, 16);
-		m.convertHexToBin();
-		binMsg = m.getBin();
-		System.out.print("\nbin view: ");
-		printArr(binMsg);
-	}
 	void makeError() {
 		Random r = new Random(0);
 		binRec = new String[super.hexInput.length];
